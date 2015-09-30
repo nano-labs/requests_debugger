@@ -2,68 +2,83 @@
 u"""Arquivo de debug da biblioteca 'requests'.
 
 Substitui a biblioteca requests em todo o projeto adicionando um _log_it()
-aos metodos get, post, put e update.
-
-Por se tratar de um hack apenas para debug sugiro remover esse arquivo de
-produção.
+aos metodos get, post, put.
 """
 
-from sys import path
-import imp
+import hashlib
+import requests
+import inspect
+import simplejson as json
+import pickle
+from functools import wraps
+from redis import Redis
 
-SHORT = 0  # Se diferente de 0 irá truncar a saída do log em X caracteres
-
-# Varre todo o sys.path em busca da biblioteca requests
-for i in path:
-    try:
-        r = imp.load_package("requests", i + "/requests")
-        # Caso consiga achar a biblioteca salva uma cópia dos metodos
-        # post, get, put e update
-        _post = r.__getattribute__("post")
-        _get = r.__getattribute__("get")
-        _put = r.__getattribute__("put")
-        _update = r.__getattribute__("update")
-        # Pára a busca ao encontrar
-        break
-    except:
-        pass
+SHORT = 160
+MAX_DEPTH = 2
+TRACK = True
+ENABLE_CACHE = False
+DEFAULT_EXPIRE_TIME = 300  # Segundos. Usado caso não exista de cache-control
+cache = Redis(host="127.0.0.1", port=6379, db=1, socket_timeout=1)
 
 
-def _log_it(method, args, kwargs):
-    u"""Printa de modo amigável todos os requests feitos."""
-    url = kwargs.get("url")
-    if not url:
-        url = args[0]
-        args = args[1:]
-    args = ", " + ", ".join([str(i) for i in args]) if args else None
-    kwargs = ", " + ", ".join(["%s=%s" % (str(i), str(j))
-                               for i, j in kwargs.items()]) if args else None
-    linha = '%s: %s%s%s' % (
-             method.upper(), url, args or '', kwargs or '')
-    if SHORT:
-        linha = linha[:SHORT]
-    print u"\033[91m%s\033[0m" % linha
+def add_logger(func):
+    u"""Adiciona o print ao método."""
+    @wraps(func)
+    def logger(*args, **kwargs):
+        u"""Printa de modo amigável todos os requests feitos."""
+        _args = args
+        url = kwargs.get("url")
+        if not url:
+            url = _args[0]
+            _args = _args[1:]
+        linha = '%s: %s %s %s' % (
+                 func.func_name.upper(), url, str(_args), kwargs)
+        if SHORT:
+            linha = linha[:SHORT]
+
+        tabbing = ""
+        if TRACK:
+            code_point = inspect.currentframe().f_back
+            arquivo = code_point.f_code.co_filename
+            arquivo_linha = code_point.f_lineno
+            track = [(arquivo, arquivo_linha)]
+            while len(track) < MAX_DEPTH:
+                code_point = code_point.f_back
+                arquivo = code_point.f_code.co_filename
+                arquivo_linha = code_point.f_lineno
+                if arquivo not in [i for i, j in track]:
+                    track = [(arquivo, arquivo_linha)] + track
+                if arquivo.endswith("app.py"):
+                    break
+
+            for a, l in track:
+                print "\033[90m%s'%s' Linha: %s\033[0m" % (tabbing, a, l)
+                tabbing += "  "
+
+        if ENABLE_CACHE and func.func_name == "get":
+            cache_key = hashlib.md5(json.dumps([args, kwargs])).hexdigest()
+            data = cache.get(cache_key)
+            if data:
+                print u"%s\033[91mCACHED %s\033[0m" % (tabbing, linha)
+                data = pickle.loads(data)
+            else:
+                print u"%s\033[91m%s\033[0m" % (tabbing, linha)
+                data = func(*args, **kwargs)
+                cache.set(cache_key, pickle.dumps(data))
+                cache_time = DEFAULT_EXPIRE_TIME
+                cache_control = data.headers.get('cache-control')
+                if cache_control and "max-age" in cache_control:
+                    cache_time = int(cache_control.split("max-age=")[1].split(",")[0])
+                cache.expire(cache_key, cache_time)
+            return data
+
+        print u"%s\033[91m%s\033[0m" % (tabbing, linha)
+        return func(*args, **kwargs)
+
+    return logger
 
 
-def get(*args, **kwargs):
-    u"""Printa os parametros de chama a cópia original do get."""
-    _log_it("get", args, kwargs)
-    return _get(*args, **kwargs)
-
-
-def post(*args, **kwargs):
-    u"""Printa os parametros de chama a cópia original do post."""
-    _log_it("post", args, kwargs)
-    return _post(*args, **kwargs)
-
-
-def update(*args, **kwargs):
-    u"""Printa os parametros de chama a cópia original do update."""
-    _log_it("update", args, kwargs)
-    return _update(*args, **kwargs)
-
-
-def put(*args, **kwargs):
-    u"""Printa os parametros de chama a cópia original do put."""
-    _log_it("put", args, kwargs)
-    return _put(*args, **kwargs)
+for method in ["get", "post", "put"]:
+    func = getattr(requests, method)
+    logged_func = add_logger(func)
+    setattr(requests, method, logged_func)
