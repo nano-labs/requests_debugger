@@ -13,7 +13,10 @@ import pickle
 from functools import wraps
 from redis import Redis
 
-SHORT = 160
+try:
+    from custom_config import REQUEST_DEBUGGER_SHORT as SHORT
+except:
+    SHORT = 160
 MAX_DEPTH = 2
 TRACK = True
 ENABLE_CACHE = False
