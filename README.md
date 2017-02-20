@@ -10,10 +10,12 @@ This single file should be used to help in debugging your project that uses 'req
 4. [Features](#features)
 5. [Usage](#usage)
   1. [Singleton module](#singleton-module)
-  2. [Traceback feature](#traceback-feature)
-  3. [Output formats](#output-formats)
-  4. [Complex requests](#complex-requests)
-  5. [Getting the standard 'requests' back](#getting-the-standard-requests-back)
+  2. [Local module](#local-module)
+  3. [Traceback feature](#traceback-feature)
+  4. [Output formats](#output-formats)
+  5. [Complex requests](#complex-requests)
+  6. [Getting the standard 'requests' back](#getting-the-standard-requests-back)
+6. [TODO](#todo)
 
 ## Why Should I Use This?
 
@@ -54,6 +56,19 @@ Remove it before commit to production. I love this little hack but IT'S NOT SAFE
   /Users/nano/envs/bbb/lib/python2.7/site-packages/IPython/core/interactiveshell.py Line: 2881
     <ipython-input-3-f2de511e6e5e> Line: 1
       2017-02-20 14:48:16 - GET: http://test.com ([], {}) {}
+<Response [463]>
+```
+
+### Local module
+- You also can import just for that namespace or when you already have 'requests' imported
+
+```python
+>>> from requests_debugger import requests
+>>> requests.get("http://test.com")
+/Users/nano/envs/bbb/lib/python2.7/site-packages/IPython/terminal/interactiveshell.py Line: 431
+  /Users/nano/envs/bbb/lib/python2.7/site-packages/IPython/core/interactiveshell.py Line: 2881
+    <ipython-input-2-f2de511e6e5e> Line: 1
+      2017-02-20 16:36:39 - GET: http://test.com ([], {}) {}
 <Response [463]>
 ```
 
@@ -153,6 +168,7 @@ Location: https://www.test.com/
 ```
 
 ### Complex requests
+- More complex requests are also translated to cURL ou python code
 ```python
 >>> import requests_debugger
 >>> import requests
@@ -183,3 +199,6 @@ requests.post("http://test.com", headers={'content-type': 'application/json', 'A
 >>> requests.get("http://test.com")
 <Response [463]>
 ```
+
+## TODO:
+- Translate requests' 'auth' argument to cURL headers
