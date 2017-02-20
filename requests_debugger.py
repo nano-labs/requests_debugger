@@ -16,11 +16,12 @@ MAX_DEPTH = 3
 LOG = "log"
 CURL = "curl"
 REQUESTS = PYTHON = "python"
-VERBOSE_TYPE = LOG
+VERBOSE_FORMAT = LOG
 
 
 def requests_to_curl(method, url, *args, **kwargs):
     """Return the request as cURL string."""
+    kwargs = args[1]
     headers = [u'-H "%s:%s"' % (k, v)
                for k, v in kwargs.get("headers", {}).items()]
     cookies = [u'-H "Cookie:%s=%s"' % (k, v)
@@ -80,7 +81,7 @@ def add_logger(func):
         url = kwargs.get("url") or _args.pop(0)
         log_format = {"python": requests_string,
                       "curl": requests_to_curl,
-                      "log": log_string}.get(VERBOSE_TYPE) or log_string
+                      "log": log_string}.get(VERBOSE_FORMAT) or log_string
         request_line = log_format(func.func_name, url, _args, kwargs)
 
         tabbing = ""
