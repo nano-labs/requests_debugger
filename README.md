@@ -3,6 +3,18 @@
 This single file should be used to help in debugging your project that uses 'requests' lib
 
 
+## Table of Contents
+1. [Why Should I Use This?](#why-should-i-use-this?)
+2. [When Should I NOT Use This?](#when-should-i-not-use-this)
+3. [How To](#how-to)
+4. [Features](#features)
+5. [Usage](#usage)
+  1. [Singleton module](#singleton-module)
+  2. [Traceback feature](#traceback-feature)
+  3. [Output formats](#output-formats)
+  4. [Complex requests](#complex-requests)
+  5. [Getting the standard 'requests' back](#getting-the-standard-requests-back)
+
 ## Why Should I Use This?
 
 Because you are tired of setting breakpoints or 'print's into your code to figure out what requests for what urls your project is making.
@@ -18,7 +30,7 @@ On your production environment. This guy is working fine but you dont need to in
 
 Just put this file on your project root directory and ALL your 'requests' imports will import this guy
 
-### But remeber:
+### But remember:
 
 Remove it before commit to production. I love this little hack but IT'S NOT SAFE FOR PRODUCTION
 
@@ -31,10 +43,10 @@ Remove it before commit to production. I love this little hack but IT'S NOT SAFE
 
 # Usage:
 
-### Singleton requests:
+### Singleton module:
 - As Python's modules are singleton if you import 'requests_debbuger' and then import 'requests' it will not re-import 'requests' but just set the requests_debugger's 'request' module into your namespace. Therefore all your requests will have the debugger feature.
 
-```pycon
+```python
 >>> import requests_debugger
 >>> import requests
 >>> requests.get("http://test.com")
@@ -48,7 +60,7 @@ Remove it before commit to production. I love this little hack but IT'S NOT SAFE
 ### Traceback feature
 - Let's say that you have some models, APIs, libs, etc that internally uses 'requests' lib. You don't know when, where or why but it does. Just import the requests_debugger before anything else and it will traceback the request to you.
 
-```pycon
+```python
 >>> import requests_debugger
 >>> from example.do_something import whatever
 >>> whatever()
@@ -60,7 +72,7 @@ example/do_something.py Line: 8
 
 - But you may disable this, if you want:
 
-```pycon
+```python
 >>> requests_debugger.MAX_DEPTH = 0
 >>> whatever()
 2017-02-20 15:03:51 - GET: http://test.com ([], {}) {}
@@ -68,7 +80,7 @@ example/do_something.py Line: 8
 
 - Or make it deeper:
 
-```pycon
+```python
 >>> requests_debugger.MAX_DEPTH = 10
 >>> whatever()
 /Users/nano/envs/bbb/bin/ipython Line: 11
@@ -88,7 +100,7 @@ example/do_something.py Line: 8
 ### Output formats
 - The default output is 'LOG' format but you also have the useful python code output that you may just copy/paste to make that same request.
 
-```pycon
+```python
 >>> import requests_debugger
 >>> requests_debugger.VERBOSE_FORMAT = requests_debugger.PYTHON
 >>> from example.do_something import whatever
@@ -111,7 +123,7 @@ example/do_something.py Line: 8
 
 - Or cURL command that you may past on your terminal
 
-```pycon
+```python
 >>> import requests_debugger
 >>> from example.do_something import whatever
 >>> requests_debugger.VERBOSE_FORMAT = requests_debugger.CURL
@@ -140,8 +152,8 @@ Location: https://www.test.com/
 </html>
 ```
 
-### Also works with complex requests
-```pycon
+### Complex requests
+```python
 >>> import requests_debugger
 >>> import requests
 >>> requests_debugger.VERBOSE_FORMAT = requests_debugger.CURL
@@ -157,7 +169,7 @@ requests.post("http://test.com", headers={'content-type': 'application/json', 'A
 
 ### Getting the standard 'requests' back
 - Just reload de module
-```pycon
+```python
 >>> import requests_debugger
 >>> import requests
 >>> requests.get("http://test.com")
