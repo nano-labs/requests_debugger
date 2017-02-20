@@ -46,7 +46,7 @@ Remove it before commit to production. I love this little hack but IT'S NOT SAFE
 ```
 
 ### Traceback feature
-- Let's say that you have some models, APIs, libs, etc that internally uses 'requests' lib. You don't now when, where or why but it does. Just import the requests_debugger before anything else and it will traceback the request to you.
+- Let's say that you have some models, APIs, libs, etc that internally uses 'requests' lib. You don't know when, where or why but it does. Just import the requests_debugger before anything else and it will traceback the request to you.
 
 ```python
 >>> import requests_debugger
@@ -68,7 +68,7 @@ example/do_something.py Line: 8
 
 - Or make it deeper:
 
-```python
+```pycon
 >>> requests_debugger.MAX_DEPTH = 10
 >>> whatever()
 /Users/nano/envs/bbb/bin/ipython Line: 11
