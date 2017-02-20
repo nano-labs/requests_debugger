@@ -25,16 +25,16 @@ With this I figured that I make about 600 requests every time I run a full proje
 
 ## When Should I NOT Use This?
 
-On your production environment. This guy is working fine but you dont need to insert this lame-hacking failure point into you production code.
+On your production environment. This guy is working fine but you dont need to insert this lame-hacking-failure-point into you production code, do you?
 
 
 ## How To
 
-Just put this file on your project root directory and ALL your 'requests' imports will import this guy
+Just import this file. See the [Usage](#usage) section for more information
 
-### But remember:
+#### But remember:
 
-Remove it before commit to production. I love this little hack but IT'S NOT SAFE FOR PRODUCTION
+Do not use it on production. I love this little hack but IT'S NOT NEEDED FOR PRODUCTION
 
 
 ## Features
@@ -113,26 +113,20 @@ example/do_something.py Line: 8
 ```
 
 ### Output formats
-- The default output is 'LOG' format but you also have the useful python code output that you may just copy/paste to make that same request.
+- The default output is 'LOG' format but you also have the useful python code output that you may just copy/paste to make that same request again.
 
 ```python
+>>> import requests
 >>> import requests_debugger
 >>> requests_debugger.VERBOSE_FORMAT = requests_debugger.PYTHON
+>>> requests_debugger.MAX_DEPTH = 0
 >>> from example.do_something import whatever
 >>> whatever()
-example/do_something.py Line: 8
-  example/file_b.py Line: 8
-    example/file_a.py Line: 10
-      requests.get("http://test.com", )
-
-# Then just:
->>> import requests
-# past it back on python
->>> requests.get("http://test.com", )
-/Users/nano/envs/bbb/lib/python2.7/site-packages/IPython/terminal/interactiveshell.py Line: 431
-  /Users/nano/envs/bbb/lib/python2.7/site-packages/IPython/core/interactiveshell.py Line: 2881
-    <ipython-input-7-af46321c8e49> Line: 1
-      requests.get("http://test.com", )
+requests.get("http://test.com", )
+# Copy that output then just paste it back on python console
+>>> response = requests.get("http://test.com", )
+requests.get("http://test.com", )
+>>> response
 <Response [463]>
 ```
 
