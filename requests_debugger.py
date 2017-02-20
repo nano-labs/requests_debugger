@@ -12,14 +12,14 @@ from functools import wraps
 from datetime import datetime
 import requests
 
-MAX_DEPTH = 5
+MAX_DEPTH = 3
 LOG = "log"
 CURL = "curl"
 REQUESTS = PYTHON = "python"
 VERBOSE_TYPE = LOG
 
 
-def requests_to_cURL(method, url, *args, **kwargs):
+def requests_to_curl(method, url, *args, **kwargs):
     """Return the request as cURL string."""
     headers = [u'-H "%s:%s"' % (k, v)
                for k, v in kwargs.get("headers", {}).items()]
@@ -79,7 +79,7 @@ def add_logger(func):
         _args = list(args)
         url = kwargs.get("url") or _args.pop(0)
         log_format = {"python": requests_string,
-                      "curl": requests_to_cURL,
+                      "curl": requests_to_curl,
                       "log": log_string}.get(VERBOSE_TYPE) or log_string
         request_line = log_format(func.func_name, url, _args, kwargs)
 
