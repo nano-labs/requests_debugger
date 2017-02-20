@@ -1,27 +1,74 @@
 # -*- coding: utf-8 -*-
-u"""Arquivo de debug da biblioteca 'requests'.
+u"""
+Debug snipet for requests library.
 
-Substitui a biblioteca requests em todo o projeto adicionando um _log_it()
-aos metodos get, post, put.
+Replaces the requests library adding some debug code on it.
 """
 
-import hashlib
-import requests
+import urllib
 import inspect
-import simplejson as json
-import pickle
+import json
 from functools import wraps
-from redis import Redis
+from datetime import datetime
+import requests
 
-try:
-    from custom_config import REQUEST_DEBUGGER_SHORT as SHORT
-except:
-    SHORT = 160
-MAX_DEPTH = 2
-TRACK = True
-ENABLE_CACHE = False
-DEFAULT_EXPIRE_TIME = 300  # Segundos. Usado caso não exista de cache-control
-cache = Redis(host="127.0.0.1", port=6379, db=1, socket_timeout=1)
+MAX_DEPTH = 5
+LOG = "log"
+CURL = "curl"
+REQUESTS = PYTHON = "python"
+VERBOSE_TYPE = LOG
+
+
+def requests_to_cURL(method, url, *args, **kwargs):
+    """Return the request as cURL string."""
+    headers = [u'-H "%s:%s"' % (k, v)
+               for k, v in kwargs.get("headers", {}).items()]
+    cookies = [u'-H "Cookie:%s=%s"' % (k, v)
+               for k, v in kwargs.get("cookies", {}).items()]
+    headers = u" ".join(headers + cookies)
+    params = urllib.urlencode(kwargs.get("params", ""))
+
+    body = kwargs.get("data")
+    if isinstance(body, dict):
+        body = json.dumps(body)
+    body = u"-d '%s'" % body if body else u""
+
+    proxies = kwargs.get("proxies") or {}
+    proxies = " ".join(["--proxy %s://%s" % (proto, uri)
+                        for proto, uri in proxies.items()])
+
+    if params:
+        url = u"%s%s%s" % (url, "&" if "?" in url else "?", params)
+
+    curl = u"""curl -i -X %(method)s %(proxies)s %(headers)s %(body)s '%(url)s'""" % {
+           "url": url, "method": method.upper(), "headers": headers,
+           "body": body, "proxies": proxies}
+
+    return curl
+
+
+def requests_string(method, url, *args, **kwargs):
+    """Return a string that contains a python requests call."""
+    kwargs = args[1]
+    args = args[0]
+    args_string = (", %s" % ", ".join([i for i in args])) if args else ""
+    kwargs_string = ", ".join(["%s=%s" % (k, v) for k, v in kwargs.items()])
+    line = 'requests.%s("%s"%s, %s)' % (
+                        method, url, args_string, kwargs_string)
+    return line
+
+
+def log_string(method, url, *args, **kwargs):
+    """Return a simple log string."""
+    line = '%s - %s: %s %s %s' % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                  method.upper(), url, str(args), kwargs)
+    return line
+
+
+def cprint(string, color):
+    """Print a colored line."""
+    color_code = {"red": 1, "gray": 0}.get(color, 0)
+    print "\033[9%sm%s\033[0m" % (color_code, string)
 
 
 def add_logger(func):
@@ -29,53 +76,33 @@ def add_logger(func):
     @wraps(func)
     def logger(*args, **kwargs):
         u"""Printa de modo amigável todos os requests feitos."""
-        _args = args
-        url = kwargs.get("url")
-        if not url:
-            url = _args[0]
-            _args = _args[1:]
-        linha = '%s: %s %s %s' % (
-                 func.func_name.upper(), url, str(_args), kwargs)
-        if SHORT:
-            linha = linha[:SHORT]
+        _args = list(args)
+        url = kwargs.get("url") or _args.pop(0)
+        log_format = {"python": requests_string,
+                      "curl": requests_to_cURL,
+                      "log": log_string}.get(VERBOSE_TYPE) or log_string
+        request_line = log_format(func.func_name, url, _args, kwargs)
 
         tabbing = ""
-        if TRACK:
+        if MAX_DEPTH:
             code_point = inspect.currentframe().f_back
             arquivo = code_point.f_code.co_filename
             arquivo_linha = code_point.f_lineno
             track = [(arquivo, arquivo_linha)]
             while len(track) < MAX_DEPTH:
                 code_point = code_point.f_back
+                if not code_point:
+                    break
                 arquivo = code_point.f_code.co_filename
                 arquivo_linha = code_point.f_lineno
                 if arquivo not in [i for i, j in track]:
                     track = [(arquivo, arquivo_linha)] + track
-                if arquivo.endswith("app.py"):
-                    break
 
             for a, l in track:
-                print "\033[90m%s'%s' Linha: %s\033[0m" % (tabbing, a, l)
+                cprint("%s%s Line: %s" % (tabbing, a, l), "gray")
                 tabbing += "  "
 
-        if ENABLE_CACHE and func.func_name == "get":
-            cache_key = hashlib.md5(json.dumps([args, kwargs])).hexdigest()
-            data = cache.get(cache_key)
-            if data:
-                print u"%s\033[91mCACHED %s\033[0m" % (tabbing, linha)
-                data = pickle.loads(data)
-            else:
-                print u"%s\033[91m%s\033[0m" % (tabbing, linha)
-                data = func(*args, **kwargs)
-                cache.set(cache_key, pickle.dumps(data))
-                cache_time = DEFAULT_EXPIRE_TIME
-                cache_control = data.headers.get('cache-control')
-                if cache_control and "max-age" in cache_control:
-                    cache_time = int(cache_control.split("max-age=")[1].split(",")[0])
-                cache.expire(cache_key, cache_time)
-            return data
-
-        print u"%s\033[91m%s\033[0m" % (tabbing, linha)
+        cprint("%s%s" % (tabbing, request_line), "red")
         return func(*args, **kwargs)
 
     return logger
