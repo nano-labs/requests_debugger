@@ -44,3 +44,43 @@ Remove it before commit to production. I love this little hack but IT'S NOT SAFE
       2017-02-20 14:48:16 - GET: http://test.com ([], {}) {}
 <Response [463]>
 ```
+
+### Traceback feature
+- Let's say that you have some models, APIs, libs, etc that internally uses 'requests' lib. You don't now when, where or why but it does. Just import the requests_debugger before anything else and it will traceback the request to you.
+
+```python
+>>> import requests_debugger
+>>> from example.do_something import whatever
+>>> whatever()
+example/do_something.py Line: 8
+  example/file_b.py Line: 8
+    example/file_a.py Line: 10
+      2017-02-20 15:01:03 - GET: http://test.com ([], {}) {}
+```
+
+- But you may disable this, if you want:
+
+```python
+>>> requests_debugger.MAX_DEPTH = 0
+>>> whatever()
+2017-02-20 15:03:51 - GET: http://test.com ([], {}) {}
+```
+
+- Or make it deeper:
+
+```python
+>>> requests_debugger.MAX_DEPTH = 10
+>>> whatever()
+/Users/nano/envs/bbb/bin/ipython Line: 11
+  /Users/nano/envs/bbb/lib/python2.7/site-packages/IPython/__init__.py Line: 119
+    /Users/nano/envs/bbb/lib/python2.7/site-packages/traitlets/config/application.py Line: 658
+      /Users/nano/envs/bbb/lib/python2.7/site-packages/IPython/terminal/ipapp.py Line: 348
+        /Users/nano/envs/bbb/lib/python2.7/site-packages/IPython/terminal/interactiveshell.py Line: 431
+          /Users/nano/envs/bbb/lib/python2.7/site-packages/IPython/core/interactiveshell.py Line: 2881
+            <ipython-input-7-ad0274cf4d97> Line: 1
+              example/do_something.py Line: 8
+                example/file_b.py Line: 8
+                  example/file_a.py Line: 10
+                    2017-02-20 15:05:09 - GET: http://test.com ([], {}) {}
+
+```
