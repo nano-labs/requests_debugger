@@ -9,12 +9,12 @@ This single file should be used to help in debugging your project that uses 'req
 3. [How To](#how-to)
 4. [Features](#features)
 5. [Usage](#usage)
-  1. [Singleton module](#singleton-module)
-  2. [Local module](#local-module)
-  3. [Traceback feature](#traceback-feature)
-  4. [Output formats](#output-formats)
-  5. [Complex requests](#complex-requests)
-  6. [Getting the standard 'requests' back](#getting-the-standard-requests-back)
+    1. [Singleton module](#singleton-module)
+    2. [Local module](#local-module)
+    3. [Traceback feature](#traceback-feature)
+    4. [Output formats](#output-formats)
+    5. [Complex requests](#complex-requests)
+    6. [Getting the standard 'requests' back](#getting-the-standard-requests-back)
 6. [TODO](#todo)
 
 ## Why Should I Use This?
