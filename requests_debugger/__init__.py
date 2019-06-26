@@ -1,1 +1,1 @@
-from requests_debugger import *
+from .requests_debugger import *
