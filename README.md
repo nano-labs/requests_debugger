@@ -29,8 +29,17 @@ On your production environment. This guy is working fine but you dont need to in
 
 
 ## How To
+- Install with
+```
+pip install requests-debugger
+```
 
-Just import this file. See the [Usage](#usage) section for more information
+-Then just import this lib with
+
+```python
+import requests_debugger
+```
+See the [Usage](#usage) section for more information
 
 #### But remember:
 
@@ -88,7 +97,8 @@ example/do_something.py Line: 8
 - But you may disable this, if you want:
 
 ```python
->>> requests_debugger.MAX_DEPTH = 0
+>>> import requests_debugger
+>>> requests_debugger.set(max_depth=0)
 >>> whatever()
 2017-02-20 15:03:51 - GET: http://test.com ([], {}) {}
 ```
@@ -96,7 +106,8 @@ example/do_something.py Line: 8
 - Or make it deeper:
 
 ```python
->>> requests_debugger.MAX_DEPTH = 10
+>>> import requests_debugger
+>>> requests_debugger.set(max_depth=10)
 >>> whatever()
 /Users/nano/envs/bbb/bin/ipython Line: 11
   /Users/nano/envs/bbb/lib/python2.7/site-packages/IPython/__init__.py Line: 119
@@ -118,8 +129,7 @@ example/do_something.py Line: 8
 ```python
 >>> import requests
 >>> import requests_debugger
->>> requests_debugger.VERBOSE_FORMAT = requests_debugger.PYTHON
->>> requests_debugger.MAX_DEPTH = 0
+>>> requests_debugger.set(output_format=requests_debugger.PYTHON, max_depth=0)
 >>> from example.do_something import whatever
 >>> whatever()
 requests.get("http://test.com", )
@@ -135,8 +145,7 @@ requests.get("http://test.com", )
 ```python
 >>> import requests_debugger
 >>> from example.do_something import whatever
->>> requests_debugger.VERBOSE_FORMAT = requests_debugger.CURL
->>> requests_debugger.MAX_DEPTH = 0
+>>> requests_debugger.set(output_format=requests_debugger.CURL, max_depth=0)
 >>> whatever()
 curl -i -X GET    'http://test.com'
 ```
@@ -166,19 +175,18 @@ Location: https://www.test.com/
 ```python
 >>> import requests_debugger
 >>> import requests
->>> requests_debugger.VERBOSE_FORMAT = requests_debugger.CURL
->>> requests_debugger.MAX_DEPTH = 0
+>>> requests_debugger.set(output_format=requests_debugger.CURL, max_depth=0)
 >>> requests.post("http://test.com", data={"foo": "bar"}, headers={"Authorization": "Basic IUYihda", 'content-type': 'application/json'}, proxies={"http": "http://proxy.com"}, cookies={"bar": "foo"})
 curl -i -X POST --proxy http://http://proxy.com -H "content-type:application/json" -H "Authorization:Basic IUYihda" -H "Cookie:bar=foo" -d '{"foo": "bar"}' 'http://test.com'
 <Response [200]>
->>> requests_debugger.VERBOSE_FORMAT = requests_debugger.PYTHON
+>>> requests_debugger.set(output_format=requests_debugger.PYTHON)
 >>> requests.post("http://test.com", data={"foo": "bar"}, headers={"Authorization": "Basic IUYihda", 'content-type': 'application/json'}, proxies={"http": "http://proxy.com"}, cookies={"bar": "foo"})
 requests.post("http://test.com", headers={'content-type': 'application/json', 'Authorization': 'Basic IUYihda'}, cookies={'bar': 'foo'}, proxies={'http': 'http://proxy.com'}, data={'foo': 'bar'})
 <Response [200]>
 ```
 
 ### Getting the standard 'requests' back
-- Just reload de module
+- use unload() method
 ```python
 >>> import requests_debugger
 >>> import requests
@@ -188,8 +196,7 @@ requests.post("http://test.com", headers={'content-type': 'application/json', 'A
     <ipython-input-3-f2de511e6e5e> Line: 1
       2017-02-20 15:37:36 - GET: http://test.com ([], {}) {}
 <Response [463]>
->>> reload(requests)
-<module 'requests' from '/Users/nano/envs/bbb/lib/python2.7/site-packages/requests/__init__.pyc'>
+>>> requests_debugger.unload()
 >>> requests.get("http://test.com")
 <Response [463]>
 ```
