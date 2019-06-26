@@ -22,19 +22,19 @@ REQUESTS = PYTHON = "python"
 VERBOSE_FORMAT = LOG
 
 
-if(sys.version_info.major>=3):
-    def reload(MODULE):        
+if sys.version_info.major >= 3:
+
+    def reload(MODULE):
         import importlib
+
         importlib.reload(MODULE)
 
 
 def requests_to_curl(method, url, *args, **kwargs):
     """Return the request as cURL string."""
     kwargs = args[1]
-    headers = ['-H "%s:%s"' % (k, v)
-               for k, v in list(kwargs.get("headers", {}).items())]
-    cookies = ['-H "Cookie:%s=%s"' % (k, v)
-               for k, v in list(kwargs.get("cookies", {}).items())]
+    headers = ['-H "%s:%s"' % (k, v) for k, v in list(kwargs.get("headers", {}).items())]
+    cookies = ['-H "Cookie:%s=%s"' % (k, v) for k, v in list(kwargs.get("cookies", {}).items())]
     headers = " ".join(headers + cookies)
     params = urllib.parse.urlencode(kwargs.get("params", ""))
 
@@ -44,15 +44,18 @@ def requests_to_curl(method, url, *args, **kwargs):
     body = "-d '%s'" % body if body else ""
 
     proxies = kwargs.get("proxies") or {}
-    proxies = " ".join(["--proxy %s://%s" % (proto, uri)
-                        for proto, uri in list(proxies.items())])
+    proxies = " ".join(["--proxy %s://%s" % (proto, uri) for proto, uri in list(proxies.items())])
 
     if params:
         url = "%s%s%s" % (url, "&" if "?" in url else "?", params)
 
     curl = """curl -i -X %(method)s %(proxies)s %(headers)s %(body)s '%(url)s'""" % {
-           "url": url, "method": method.upper(), "headers": headers,
-           "body": body, "proxies": proxies}
+        "url": url,
+        "method": method.upper(),
+        "headers": headers,
+        "body": body,
+        "proxies": proxies,
+    }
 
     return curl
 
@@ -63,15 +66,19 @@ def requests_string(method, url, *args, **kwargs):
     args = args[0]
     args_string = (", %s" % ", ".join([i for i in args])) if args else ""
     kwargs_string = ", ".join(["%s=%s" % (k, v) for k, v in list(kwargs.items())])
-    line = 'requests.%s("%s"%s, %s)' % (
-                        method, url, args_string, kwargs_string)
+    line = 'requests.%s("%s"%s, %s)' % (method, url, args_string, kwargs_string)
     return line
 
 
 def log_string(method, url, *args, **kwargs):
     """Return a simple log string."""
-    line = '%s - %s: %s %s %s' % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                  method.upper(), url, str(args), kwargs)
+    line = '%s - %s: %s %s %s' % (
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        method.upper(),
+        url,
+        str(args),
+        kwargs,
+    )
     return line
 
 
@@ -83,14 +90,15 @@ def cprint(string, color):
 
 def add_logger(func, output_format, max_depth):
     """Adiciona o print ao método."""
+
     @wraps(func)
     def logger(*args, **kwargs):
         """Printa de modo amigável todos os requests feitos."""
         _args = list(args)
         url = kwargs.get("url") or _args.pop(0)
-        log_format = {"python": requests_string,
-                      "curl": requests_to_curl,
-                      "log": log_string}.get(output_format) or log_string
+        log_format = {"python": requests_string, "curl": requests_to_curl, "log": log_string}.get(
+            output_format
+        ) or log_string
         request_line = log_format(func.__name__, url, _args, kwargs)
 
         tabbing = ""
