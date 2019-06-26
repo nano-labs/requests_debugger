@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-u"""
+"""
 Debug snipet for requests library.
 
 Replaces the requests library adding some debug code on it.
 """
 
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import inspect
 import json
 from functools import wraps
@@ -22,26 +22,26 @@ VERBOSE_FORMAT = LOG
 def requests_to_curl(method, url, *args, **kwargs):
     """Return the request as cURL string."""
     kwargs = args[1]
-    headers = [u'-H "%s:%s"' % (k, v)
-               for k, v in kwargs.get("headers", {}).items()]
-    cookies = [u'-H "Cookie:%s=%s"' % (k, v)
-               for k, v in kwargs.get("cookies", {}).items()]
-    headers = u" ".join(headers + cookies)
-    params = urllib.urlencode(kwargs.get("params", ""))
+    headers = ['-H "%s:%s"' % (k, v)
+               for k, v in list(kwargs.get("headers", {}).items())]
+    cookies = ['-H "Cookie:%s=%s"' % (k, v)
+               for k, v in list(kwargs.get("cookies", {}).items())]
+    headers = " ".join(headers + cookies)
+    params = urllib.parse.urlencode(kwargs.get("params", ""))
 
     body = kwargs.get("data")
     if isinstance(body, dict):
         body = json.dumps(body)
-    body = u"-d '%s'" % body if body else u""
+    body = "-d '%s'" % body if body else ""
 
     proxies = kwargs.get("proxies") or {}
     proxies = " ".join(["--proxy %s://%s" % (proto, uri)
-                        for proto, uri in proxies.items()])
+                        for proto, uri in list(proxies.items())])
 
     if params:
-        url = u"%s%s%s" % (url, "&" if "?" in url else "?", params)
+        url = "%s%s%s" % (url, "&" if "?" in url else "?", params)
 
-    curl = u"""curl -i -X %(method)s %(proxies)s %(headers)s %(body)s '%(url)s'""" % {
+    curl = """curl -i -X %(method)s %(proxies)s %(headers)s %(body)s '%(url)s'""" % {
            "url": url, "method": method.upper(), "headers": headers,
            "body": body, "proxies": proxies}
 
@@ -53,7 +53,7 @@ def requests_string(method, url, *args, **kwargs):
     kwargs = args[1]
     args = args[0]
     args_string = (", %s" % ", ".join([i for i in args])) if args else ""
-    kwargs_string = ", ".join(["%s=%s" % (k, v) for k, v in kwargs.items()])
+    kwargs_string = ", ".join(["%s=%s" % (k, v) for k, v in list(kwargs.items())])
     line = 'requests.%s("%s"%s, %s)' % (
                         method, url, args_string, kwargs_string)
     return line
@@ -69,20 +69,20 @@ def log_string(method, url, *args, **kwargs):
 def cprint(string, color):
     """Print a colored line."""
     color_code = {"red": 1, "gray": 0}.get(color, 0)
-    print "\033[9%sm%s\033[0m" % (color_code, string)
+    print("\033[9%sm%s\033[0m" % (color_code, string))
 
 
 def add_logger(func):
-    u"""Adiciona o print ao método."""
+    """Adiciona o print ao método."""
     @wraps(func)
     def logger(*args, **kwargs):
-        u"""Printa de modo amigável todos os requests feitos."""
+        """Printa de modo amigável todos os requests feitos."""
         _args = list(args)
         url = kwargs.get("url") or _args.pop(0)
         log_format = {"python": requests_string,
                       "curl": requests_to_curl,
                       "log": log_string}.get(VERBOSE_FORMAT) or log_string
-        request_line = log_format(func.func_name, url, _args, kwargs)
+        request_line = log_format(func.__name__, url, _args, kwargs)
 
         tabbing = ""
         if MAX_DEPTH:
