@@ -17,7 +17,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 setup(
     name='requests-debugger',
 
-    version='0.0.2',
+    version='0.0.1',
 
     description='Prints queries executed on you projects along with line traceback.',
     long_description=long_description,
