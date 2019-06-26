@@ -17,7 +17,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 setup(
     name='requests-debugger',
 
-    version='0.0.1',
+    version='0.0.3',
 
     description='Prints queries executed on you projects along with line traceback.',
     long_description=long_description,
@@ -25,7 +25,7 @@ setup(
 
     # The project's main homepage.
     url='https://github.com/nano-labs/requests_debugger',
-    download_url='https://github.com/nano-labs/requests_debugger/archive/0.0.1.zip',
+    download_url='https://github.com/nano-labs/requests_debugger/archive/0.0.3.zip',
 
     # Author details
     author='Fabio Pachelli Pacheco',
