@@ -38,7 +38,7 @@ def requests_to_curl(method, url, *args, **kwargs):
     headers = " ".join(headers + cookies)
     params = urllib.parse.urlencode(kwargs.get("params", ""))
 
-    body = kwargs.get("data")
+    body = kwargs.get("data") or kwargs.get("json")
     if isinstance(body, dict):
         body = json.dumps(body)
     body = "-d '%s'" % body if body else ""
@@ -96,9 +96,11 @@ def add_logger(func, output_format, max_depth):
         """Printa de modo amigável todos os requests feitos."""
         _args = list(args)
         url = kwargs.get("url") or _args.pop(0)
-        log_format = {"python": requests_string, "curl": requests_to_curl, "log": log_string}.get(
-            output_format
-        ) or log_string
+        log_format = {
+            "python": requests_string,
+            "curl": requests_to_curl,
+            "log": log_string,
+        }.get(output_format) or log_string
         request_line = log_format(func.__name__, url, _args, kwargs)
 
         tabbing = ""
@@ -127,11 +129,12 @@ def add_logger(func, output_format, max_depth):
 
 
 def _apply(output_format, max_depth):
-    for method in ["get", "post", "put", "patch", "delete"]:
-        func = getattr(requests, "_%s" % method, getattr(requests, method))
-        setattr(requests, "_%s" % method, func)
-        logged_func = add_logger(func, output_format=output_format, max_depth=max_depth)
-        setattr(requests, method, logged_func)
+    for inject_point in [requests, requests.Session]:
+        for method in ["get", "post", "put", "patch", "delete"]:
+            func = getattr(inject_point, "_%s" % method, getattr(inject_point, method))
+            setattr(inject_point, "_%s" % method, func)
+            logged_func = add_logger(func, output_format=output_format, max_depth=max_depth)
+            setattr(inject_point, method, logged_func)
 
 
 def set(output_format=VERBOSE_FORMAT, max_depth=MAX_DEPTH):
